@@ -11,6 +11,7 @@ public class Product {
     public Product(String productName, double productPrice) {
         this.productName = productName;
         this.productPrice = productPrice;
+
     }
 
     public int getId() {

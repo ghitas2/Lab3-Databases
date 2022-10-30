@@ -6,10 +6,13 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class MyDBHandler extends SQLiteOpenHelper {
     private static final String TABLE_NAME = "products";
     private static final String COLUMN_ID = "id";
-    private static final String COLUMN_PRODUCT_NAME = "name";
+    private static final String COLUMN_PRODUCT_NAME = " name";
     private static final String COLUMN_PRODUCT_PRICE = "price";
     private static final String DATABASE_NAME = "products.db";
     private static final int DATABASE_VERSION = 1;
@@ -52,37 +55,68 @@ public class MyDBHandler extends SQLiteOpenHelper {
         db.close();
     }
 
-    public Product findProduct(String productname) {
-        SQLiteDatabase db = this.getWritableDatabase();
-        String query = "SELECT * FROM " + TABLE_NAME + "WHERE" + COLUMN_PRODUCT_NAME + "=\"" + productname + "\"";
-        Cursor cursor = db.rawQuery(query, null);
-
-        Product product = new Product();
-        if (cursor.moveToFirst()) {
-            product.setId(Integer.parseInt(cursor.getString(0)));
-            product.setProductName(cursor.getString(1));
-            product.setProductPrice(Double.parseDouble(cursor.getString(2)));
-            cursor.close();
-        } else {
-            product = null;
-        }
-        db.close();
-        return product;
-    }
-    public boolean deleteProduct(String productname){
+    public boolean deleteProducts(String productname){
         boolean result = false;
         SQLiteDatabase db = this.getWritableDatabase();
-
-        String query = "SELECT*FROM" +TABLE_NAME + "WHERE" +COLUMN_PRODUCT_NAME + "=\"" + productname + "\"";
-        Cursor cursor =db.rawQuery(query , null);
-        if(cursor.moveToFirst()){
+        String query = " SELECT * FROM " + TABLE_NAME + " WHERE " +COLUMN_PRODUCT_NAME + "=\"" + productname +"\"";
+        Cursor cursor = db.rawQuery(query , null);
+        if(cursor.moveToFirst()) {
             String idstr = cursor.getString(0);
-            db.delete(TABLE_NAME , COLUMN_ID +   "=" + idstr , null);
+            db.delete(TABLE_NAME, COLUMN_PRODUCT_NAME + " = \"" + productname + "\"", null);
             cursor.close();
-            result = true ;
+            result = true;
         }
-         db.close();
+        db.close ();
         return result ;
+
+    }
+
+    public boolean deleteProductsByPrice(Double price){
+        boolean result = false;
+        SQLiteDatabase db = this.getWritableDatabase();
+        String query = " SELECT * FROM " + TABLE_NAME + " WHERE " +COLUMN_PRODUCT_PRICE + "=\"" + price + "\"" ;
+        Cursor cursor = db.rawQuery(query , null);
+        if(cursor.moveToFirst()) {
+            db.delete(TABLE_NAME, COLUMN_PRODUCT_PRICE + " = \"" + price + "\"", null);
+            cursor.close();
+            result = true;
+        }
+        db.close ();
+        return result ;
+
+    }
+
+    public List<String> findProduct(String productname, double productprice) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        String tail="";
+
+        if (productname != null && !"".equals(productname))
+            tail = COLUMN_PRODUCT_NAME + " like \"" + productname + "%\"";
+
+        String andStatement = "";
+        if (productprice != 0) {
+            if (productname != null && !"".equals(productname))
+                andStatement = " and ";
+            tail = tail + andStatement + COLUMN_PRODUCT_PRICE + "=" + productprice;
+        }
+
+        String query = "SELECT * FROM "+ TABLE_NAME + " WHERE " + tail;
+        Cursor cursor =db.rawQuery(query ,null);
+        List<String> productsList = new ArrayList<String>();
+        if(cursor.moveToFirst()){
+            String s = cursor.getString(1) + "("+cursor.getString(2)+")";
+            productsList.add(s);
+
+            String res = null;
+            while(cursor.moveToNext()) {
+                res = cursor.getString(1) + "("+cursor.getString(2)+")";
+                productsList.add(res);
+            }
+            cursor.close();
+        }
+
+        db.close();
+        return productsList;
     }
 
 
